@@ -1,74 +1,56 @@
 # prologo
 
-A Go library for detecting function prologues in ELF binaries by disassembling and analyzing instruction patterns.
+A Go library for static function recovery from executable binaries.
 
-## Overview
-
-**prologo** is a Go library that disassembles the `.text` section of ELF executables and identifies common function prologue patterns used by compilers.
+It works with raw bytes from any binary format as well as parsing ELF files.
 
 ## Features
 
-- **ELF Binary Support**: Parses and analyzes ELF format executables
-- **Multiple Prologue Detection**: Recognizes various function entry patterns
-- **Pattern Classification**: Labels detected prologues by type
-- **Fast Analysis**: Efficient Go-based disassembly
+- **Prologue-Based Detection**: Recognizes common function entry patterns by instruction analysis
+- **Format-Agnostic Core**: Works on raw machine code bytes from any binary format
+- **ELF Convenience Wrapper**: Built-in support for parsing ELF executables
+- **Pattern Classification**: Labels detected prologues by type (classic, no-frame-pointer, push-only, lea-based)
 
-## Supported Architectures
+## Supported architectures
 
-- **x86_64** (AMD64) - Full support
+- **x86_64** (AMD64)
 
-## Supported Function Prologues
+## Function Metadata
 
-prologo detects the following x86_64 function prologue patterns:
+### Prologues
 
-### 1. Classic Frame Pointer Setup
+Prologues are one of the metadata that prologo recovers about functions. They are detected by recognizing common instruction patterns at function entry points.
+
+#### 1. Classic Frame Pointer Setup (`classic`)
+
 ```asm
 push rbp        ; Save caller's frame pointer
 mov rbp, rsp    ; Set up new frame pointer
 ```
+Traditional prologue that establishes a complete stack frame with base pointer.
+Used by: Non-optimized builds (`-O0`), code with `-fno-omit-frame-pointer`
 
-**Detection Label**: `classic`
+#### 2. No-Frame-Pointer Function (`no-frame-pointer`)
 
-**Description**: Traditional prologue that establishes a complete stack frame with base pointer.
-
-- Used by: Non-optimized builds (`-O0`), code with `-fno-omit-frame-pointer`
-
----
-
-### 2. No-Frame-Pointer Function
 ```asm
 sub rsp, 0x20   ; Allocate stack space directly
 ```
+Optimized prologue that skips frame pointer setup entirely.
+Used by: Optimized builds (`-O2`, `-O3`), `-fomit-frame-pointer` flag
 
-**Detection Label**: `no-frame-pointer`
+#### 3. Push-Only Prologue (`push-only`)
 
-**Description**: Optimized prologue that skips frame pointer setup entirely.
-
-- Used by: Optimized builds (`-O2`, `-O3`), `-fomit-frame-pointer` flag
-
----
-
-### 3. Push-Only Prologue
 ```asm
 push rbp        ; Save frame pointer only
 ```
+Minimal prologue that saves RBP but doesn't establish a frame chain.
 
-**Detection Label**: `push-only`
+#### 4. LEA-Based Stack Allocation (`lea-based`)
 
-**Description**: Minimal prologue that saves RBP but doesn't establish a frame chain.
-
----
-
-### 4. LEA-Based Stack Allocation
 ```asm
 lea rsp, [rsp-0x20]   ; Allocate using LEA instead of SUB
 ```
-
-**Detection Label**: `lea-based`
-
-**Description**: Alternative stack allocation using LEA instruction. LEA doesn't modify CPU flags (unlike SUB).
-
----
+Alternative stack allocation using LEA instruction. LEA doesn't modify CPU flags (unlike SUB).
 
 ## Usage
 
@@ -97,17 +79,9 @@ func main() {
         log.Fatal(err)
     }
 
-    counts := make(map[prologo.PrologueType]int)
     for _, p := range prologues {
         fmt.Printf("[%s] 0x%x: %s\n", p.Type, p.Address, p.Instructions)
-        counts[p.Type]++
     }
-
-    fmt.Println()
-    for typ, n := range counts {
-        fmt.Printf("  %s: %d\n", typ, n)
-    }
-    fmt.Printf("Total: %d\n", len(prologues))
 }
 ```
 
@@ -118,15 +92,9 @@ func main() {
 [classic] 0x401020: push rbp; mov rbp, rsp
 [no-frame-pointer] 0x401040: sub rsp, 0x20
 [push-only] 0x401060: push rbp
-...
-
-  classic: 1547
-  no-frame-pointer: 1
-  push-only: 2
-Total: 1550
 ```
 
-#### API Reference
+## API Reference
 
 **Functions:**
 
@@ -179,13 +147,13 @@ type Prologue struct {
          ▼
 ┌─────────────────┐
 │  Disassembler   │ ← golang.org/x/arch/x86/x86asm
-│  (x86_64 decode)│
+│   (ASM decode)  │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
 │ Pattern Matcher │ ← Prologue detection logic
-│  (1-2 inst seq) │
+│   (insns seq)   │
 └────────┬────────┘
          │
          ▼
@@ -215,6 +183,3 @@ type Prologue struct {
 - [Go x86 Assembler](https://pkg.go.dev/golang.org/x/arch/x86/x86asm)
 - [ELF Format Specification](https://refspecs.linuxfoundation.org/elf/elf.pdf)
 
----
-
-**Author**: Massimiliano Giovagnoli ([@maxgio92](https://github.com/maxgio92))
