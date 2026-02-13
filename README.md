@@ -132,7 +132,7 @@ Total: 1550
 
 ```go
 // Core detection — works on raw machine code bytes, no I/O.
-func DetectPrologues(code []byte, baseAddr uint64) []Prologue
+func DetectPrologues(code []byte, baseAddr uint64) ([]Prologue, error)
 
 // Convenience wrapper — parses ELF from the reader, extracts .text, calls DetectPrologues.
 func DetectProloguesFromELF(r io.ReaderAt) ([]Prologue, error)

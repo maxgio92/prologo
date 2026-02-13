@@ -11,7 +11,7 @@ import (
 // DetectPrologues analyzes raw machine code bytes and returns detected function
 // prologues. baseAddr is the virtual address corresponding to the start of code.
 // This function performs no I/O and works with any binary format.
-func DetectPrologues(code []byte, baseAddr uint64) []Prologue {
+func DetectPrologues(code []byte, baseAddr uint64) ([]Prologue, error) {
 	var result []Prologue
 
 	offset := 0
@@ -78,7 +78,7 @@ func DetectPrologues(code []byte, baseAddr uint64) []Prologue {
 		addr += uint64(inst.Len)
 	}
 
-	return result
+	return result, nil
 }
 
 // DetectProloguesFromELF parses an ELF binary from the given reader, extracts
@@ -100,5 +100,5 @@ func DetectProloguesFromELF(r io.ReaderAt) ([]Prologue, error) {
 		return nil, fmt.Errorf("failed to read .text section: %w", err)
 	}
 
-	return DetectPrologues(code, textSec.Addr), nil
+	return DetectPrologues(code, textSec.Addr)
 }
