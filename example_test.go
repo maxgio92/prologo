@@ -11,7 +11,7 @@ import (
 func ExampleDetectPrologues() {
 	// x86-64 machine code: nop; push rbp; mov rbp, rsp
 	code := []byte{0x90, 0x55, 0x48, 0x89, 0xe5}
-	prologues, err := prologo.DetectPrologues(code, 0x1000)
+	prologues, err := prologo.DetectPrologues(code, 0x1000, prologo.ArchAMD64)
 	if err != nil {
 		log.Fatal(err)
 	}
