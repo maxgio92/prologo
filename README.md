@@ -1,6 +1,8 @@
-# resurgo
-
-A Go library for static function recovery from executable binaries.
+<div align="center">
+  <img src="docs/images/resurgo_logo.png" alt="resurgo logo" width="200"/>
+  <h1>resurgo</h1>
+  <p>A Go library for static function recovery from executable binaries.</p>
+</div>
 
 It works with raw bytes from any binary format as well as parsing ELF files.
 
