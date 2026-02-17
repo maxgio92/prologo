@@ -54,7 +54,7 @@ func TestDetectProloguesAMD64(t *testing.T) {
 			wantAddr:  0,
 		},
 		{
-			// nop; push rbx (0x53); sub rsp, 0x20 — push not at boundary,
+			// nop; push rbx (0x53); sub rsp, 0x20  - push not at boundary,
 			// only the sub rsp is detected as NoFramePointer.
 			name:      "no-frame-pointer-after-push",
 			code:      []byte{0x90, 0x53, 0x48, 0x83, 0xec, 0x20},
@@ -64,7 +64,7 @@ func TestDetectProloguesAMD64(t *testing.T) {
 			wantAddr:  2,
 		},
 		{
-			// push rbp; nop — push rbp at start, not followed by mov rbp, rsp
+			// push rbp; nop  - push rbp at start, not followed by mov rbp, rsp
 			name:      string(resurgo.ProloguePushOnly),
 			code:      []byte{0x55, 0x90},
 			baseAddr:  0,
