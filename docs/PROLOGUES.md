@@ -39,11 +39,11 @@ A push of any callee-saved register (rbx, rbp, r12–r15) at a function boundary
 ```asm
 lea rsp, [rsp-0x20]   ; Allocate using LEA instead of SUB
 ```
-Achieves the same stack allocation as `sub rsp, 0x20` but without modifying the CPU flags register (RFLAGS). The compiler emits this when it needs to preserve flags across the stack allocation — for example, when a conditional branch depends on flags set before the prologue.
+Achieves the same stack allocation as `sub rsp, 0x20` but without modifying the CPU flags register (RFLAGS). The compiler emits this when it needs to preserve flags across the stack allocation  - for example, when a conditional branch depends on flags set before the prologue.
 
 ## ARM64
 
-Unlike x86_64, ARM64's `BL` (Branch with Link) instruction does not push the return address onto the stack — it stores it in **x30**, the link register (LR). The callee must explicitly save x30 to the stack if it needs to call other functions, otherwise the return address is overwritten. **x29** is the frame pointer (equivalent of RBP), used to build a chain of stack frames for unwinding.
+Unlike x86_64, ARM64's `BL` (Branch with Link) instruction does not push the return address onto the stack  - it stores it in **x30**, the link register (LR). The callee must explicitly save x30 to the stack if it needs to call other functions, otherwise the return address is overwritten. **x29** is the frame pointer (equivalent of RBP), used to build a chain of stack frames for unwinding.
 
 ARM64 uses **STP** (Store Pair) to write two 64-bit registers to adjacent memory slots in a single instruction. Pre-index addressing (the `!` suffix) means the base register (SP) is decremented *before* the store takes place.
 
@@ -53,7 +53,7 @@ ARM64 uses **STP** (Store Pair) to write two 64-bit registers to adjacent memory
 stp x29, x30, [sp, #-N]!   ; Save frame pointer and link register
 mov x29, sp                  ; Set up new frame pointer
 ```
-`stp x29, x30, [sp, #-N]!` decrements SP by N, then stores x29 (frame pointer) at `[SP]` and x30 (return address) at `[SP+8]` in one instruction. `mov x29, sp` then establishes the new frame pointer, creating a frame chain for stack unwinding. This is the standard AArch64 prologue emitted by C compilers (GCC, Clang) — the equivalent of x86's `push rbp; mov rbp, rsp`.
+`stp x29, x30, [sp, #-N]!` decrements SP by N, then stores x29 (frame pointer) at `[SP]` and x30 (return address) at `[SP+8]` in one instruction. `mov x29, sp` then establishes the new frame pointer, creating a frame chain for stack unwinding. This is the standard AArch64 prologue emitted by C compilers (GCC, Clang)  - the equivalent of x86's `push rbp; mov rbp, rsp`.
 
 ### 2. STR LR Pre-Index (`str-lr-preindex`)
 
@@ -74,4 +74,4 @@ Allocates stack space without saving any registers or setting up a frame pointer
 ```asm
 stp x29, x30, [sp, #-N]!   ; Save FP and LR only
 ```
-The STP saves both x29 and x30 to the stack, but the function does not execute `mov x29, sp` afterward. The registers are preserved for restoration on return, but no frame chain is established — stack unwinding cannot follow frame pointers through this function.
+The STP saves both x29 and x30 to the stack, but the function does not execute `mov x29, sp` afterward. The registers are preserved for restoration on return, but no frame chain is established  - stack unwinding cannot follow frame pointers through this function.
